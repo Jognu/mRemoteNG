@@ -1566,6 +1566,16 @@ Public Class frmOptions
             My.Settings.SQLUser = Me.txtSQLUsername.Text
             My.Settings.SQLPass = mRemoteNG.Security.Crypt.Encrypt(Me.txtSQLPassword.Text, App.Info.General.EncryptionKey)
 
+            If My.Settings.UseSQLServer = True Then
+                frmMain.mMenFileNew.Enabled = False
+                frmMain.mMenFileLoad.Enabled = False
+                frmMain.mMenFileSave.Enabled = False
+            Else
+                frmMain.mMenFileNew.Enabled = True
+                frmMain.mMenFileLoad.Enabled = True
+                frmMain.mMenFileSave.Enabled = True
+            End If
+
             If Me.radCredentialsNoInfo.Checked Then
                 My.Settings.EmptyCredentials = "noinfo"
             ElseIf Me.radCredentialsWindows.Checked Then

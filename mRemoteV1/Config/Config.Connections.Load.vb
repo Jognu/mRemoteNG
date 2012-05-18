@@ -681,9 +681,12 @@ Namespace Config
                     End If
 
                     If Me._Import = True And imp = False Then
-                        MessageCollector.AddMessage(Messages.MessageClass.InformationMsg, My.Language.strCannotImportNormalSessionFile)
-
-                        Exit Sub
+                        If (My.Settings.UseSQLServer <> True) Then
+                            MessageCollector.AddMessage(Messages.MessageClass.InformationMsg, My.Language.strCannotImportNormalSessionFile)
+                            Exit Sub
+                        Else
+                            imp = True
+                        End If
                     End If
 
                     If imp = False Then
@@ -694,7 +697,7 @@ Namespace Config
                     End If
 
                     ' SECTION 3. Populate the TreeView with the DOM nodes.
-                    AddNodeFromXML(xDom.DocumentElement, Me._RootTreeNode)
+                    AddNodeFromXml(xDom.DocumentElement, Me._RootTreeNode)
 
                     Me._RootTreeNode.Expand()
 

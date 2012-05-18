@@ -80,7 +80,7 @@ Namespace Config
                     If (Not sqlDataReader.HasRows) Then Return True ' assume new empty database
                     sqlDataReader.Read()
 
-                    databaseVersion = New System.Version(Convert.ToDouble(sqlDataReader.Item("confVersion"), CultureInfo.InvariantCulture))
+                    databaseVersion = New System.Version(Convert.ToDouble(sqlDataReader.Item("confVersion"), CultureInfo.InvariantCulture).ToString().Replace(",", "."))
 
                     sqlDataReader.Close()
 
@@ -194,7 +194,7 @@ Namespace Config
                                                "InheritVNCSmartSizeMode, InheritVNCViewOnly, " & _
                                                "InheritRDGatewayUsageMethod, InheritRDGatewayHostname, InheritRDGatewayUseConnectionCredentials, InheritRDGatewayUsername, InheritRDGatewayPassword, InheritRDGatewayDomain, " & _
                                                "InheritUseCredSsp, " & _
-                                               "PositionID, _parentConstantId, ConstantID, LastChange)" & _
+                                               "PositionID, ParentID, ConstantID, LastChange)" & _
                                                "VALUES (", _sqlConnection)
 
                     If Tree.Node.GetNodeType(node) = Tree.Node.Type.Connection Or Tree.Node.GetNodeType(node) = Tree.Node.Type.Container Then

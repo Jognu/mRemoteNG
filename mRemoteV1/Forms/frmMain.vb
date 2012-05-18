@@ -94,6 +94,12 @@ Public Class frmMain
         AddHandler Microsoft.Win32.SystemEvents.DisplaySettingsChanged, AddressOf DisplayChanged
 
         Me.Opacity = 1
+
+        If My.Settings.UseSQLServer = True Then
+            mMenFileNew.Enabled = False
+            mMenFileLoad.Enabled = False
+            mMenFileSave.Enabled = False
+        End If
     End Sub
 
     Private Sub ApplyLanguage()
@@ -321,25 +327,29 @@ Public Class frmMain
     End Sub
 
     Private Sub mMenFileNew_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles mMenFileNew.Click
-        Dim lD As SaveFileDialog = Tools.Controls.ConnectionsSaveAsDialog
-        If lD.ShowDialog = System.Windows.Forms.DialogResult.OK Then
-            NewConnections(lD.FileName)
-        Else
-            Exit Sub
+        If My.Settings.UseSQLServer <> True Then
+            Dim lD As SaveFileDialog = Tools.Controls.ConnectionsSaveAsDialog
+            If lD.ShowDialog = System.Windows.Forms.DialogResult.OK Then
+                NewConnections(lD.FileName)
+            Else
+                Exit Sub
+            End If
         End If
     End Sub
 
     Private Sub mMenFileLoad_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles mMenFileLoad.Click
-        If App.Runtime.IsConnectionsFileLoaded Then
-            Select Case MsgBox(My.Language.strSaveConnectionsFileBeforeOpeningAnother, MsgBoxStyle.YesNoCancel Or MsgBoxStyle.Question)
-                Case MsgBoxResult.Yes
-                    App.Runtime.SaveConnections()
-                Case MsgBoxResult.Cancel
-                    Exit Sub
-            End Select
-        End If
+        If My.Settings.UseSQLServer <> True Then
+            If App.Runtime.IsConnectionsFileLoaded Then
+                Select Case MsgBox(My.Language.strSaveConnectionsFileBeforeOpeningAnother, MsgBoxStyle.YesNoCancel Or MsgBoxStyle.Question)
+                    Case MsgBoxResult.Yes
+                        App.Runtime.SaveConnections()
+                    Case MsgBoxResult.Cancel
+                        Exit Sub
+                End Select
+            End If
 
-        LoadConnections(True)
+            LoadConnections(True)
+        End If
     End Sub
 
     Private Sub mMenFileSave_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles mMenFileSave.Click
