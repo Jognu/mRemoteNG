@@ -2055,4 +2055,7 @@ mRemoteNG will now quit and begin with the installation.</value>
   <data name="strYes" xml:space="preserve">
     <value>Yes</value>
   </data>
+  <data name="strMenuSQLUsers" xml:space="preserve">
+    <value>SQL Users</value>
+  </data>
 </root>

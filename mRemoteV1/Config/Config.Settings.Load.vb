@@ -254,7 +254,7 @@ Namespace Config
                         Return Windows.errorsPanel
                     End If
 
-                    If persistString = GetType(UI.Window.Sessions).ToString Then
+                    If persistString = GetType(UI.Window.SQLUsers).ToString Then
                         Return Windows.sessionsPanel
                     End If
 

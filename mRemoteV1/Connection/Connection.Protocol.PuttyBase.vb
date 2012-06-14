@@ -232,6 +232,7 @@ Namespace Connection
                     regKey = Registry.CurrentUser.OpenSubKey("Software\SimonTatham\PuTTY\Sessions")
 
                     Dim arrKeys() As String
+
                     arrKeys = regKey.GetSubKeyNames()
                     Array.Resize(arrKeys, arrKeys.Length + 1)
                     arrKeys(arrKeys.Length - 1) = "Default Settings"
@@ -254,7 +255,7 @@ Namespace Connection
                 Catch
                     isPuttyNg = False
                 End Try
-                MessageCollector.AddMessage(MessageClass.InformationMsg, String.Format("IsFilePuttyNg(""{0}"") = {1}", file, isPuttyNg), False)
+                'MessageCollector.AddMessage(MessageClass.InformationMsg, String.Format("IsFilePuttyNg(""{0}"") = {1}", file, isPuttyNg), False)
                 Return isPuttyNg
             End Function
 

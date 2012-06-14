@@ -1,6 +1,7 @@
 Imports System.Windows.Forms
 Imports mRemoteNG.App.Runtime
 Imports System.DirectoryServices
+Imports mRemoteNG.Tools.Controls.LastChangeController
 
 Namespace Tree
     Public Class Node
@@ -217,6 +218,7 @@ Namespace Tree
                 Dim nContI As New mRemoteNG.Container.Info()
                 nContI.TreeNode = adCNode
                 nContI.ConnectionInfo = New mRemoteNG.Connection.Info(nContI)
+                nContI.LastChange = Now
 
                 If Tree.Node.SelectedNode IsNot Nothing Then
                     If Tree.Node.GetNodeType(Tree.Node.SelectedNode) = Tree.Node.Type.Container Then
@@ -285,6 +287,7 @@ Namespace Tree
                     nConI.Hostname = strHostName
                     nConI.Description = strDescription
                     nConI.TreeNode = adNode
+                    nConI.LastChange = Now
                     adNode.Tag = nConI 'set the nodes tag to the conI
                     'add connection to connections
                     connectionList.Add(nConI)
@@ -305,6 +308,7 @@ Namespace Tree
                     Dim newInheritance As Connection.Info.Inheritance = oldConnectionInfo.Inherit.Copy()
                     newInheritance.Parent = newConnectionInfo
                     newConnectionInfo.Inherit = newInheritance
+                    newConnectionInfo.LastChange = Now
 
                     connectionList.Add(newConnectionInfo)
 
@@ -325,6 +329,7 @@ Namespace Tree
                     Dim newContainerInfo As Container.Info = TryCast(oldTreeNode.Tag, Container.Info).Copy
                     Dim newConnectionInfo As Connection.Info = TryCast(oldTreeNode.Tag, Container.Info).ConnectionInfo.Copy
                     newContainerInfo.ConnectionInfo = newConnectionInfo
+                    newConnectionInfo.LastChange = Now
 
                     Dim newTreeNode As New TreeNode(newContainerInfo.Name)
                     newTreeNode.Tag = newContainerInfo
@@ -432,6 +437,7 @@ Namespace Tree
             If NewName IsNot Nothing Then
                 If NewName.Length > 0 Then
                     SelectedNode.Tag.Name = NewName
+                    defineLastChangeNode(SelectedNode)
                 End If
             End If
         End Sub
@@ -447,6 +453,8 @@ Namespace Tree
                         SelectedNode.Parent.Nodes.Insert(SelectedNode.Index - 1, newNode)
                         SelectedNode.Remove()
                         SelectedNode = newNode
+
+                        defineLastChangeNode(SelectedNode)
 
                         TreeView.EndUpdate()
                     End If
@@ -467,6 +475,8 @@ Namespace Tree
                         SelectedNode.Parent.Nodes.Insert(SelectedNode.Index + 2, newNode)
                         SelectedNode.Remove()
                         SelectedNode = newNode
+
+                        defineLastChangeNode(SelectedNode)
 
                         TreeView.EndUpdate()
                     End If

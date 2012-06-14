@@ -27,9 +27,12 @@ Namespace Config
 
             Private _sqlConnection As SqlConnection
             Private _sqlQuery As SqlCommand
+            Private _sqlQueryCheck As SqlCommand
+            Private _sqlReader As SqlDataReader
 
             Private _currentNodeIndex As Integer = 0
             Private _parentConstantId As String = 0
+            Private _lastChange As Date
 #End Region
 
 #Region "Public Properties"
@@ -70,7 +73,7 @@ Namespace Config
 #End Region
 
 #Region "SQL"
-            Private Function VerifyDatabaseVersion(ByVal sqlConnection As SqlConnection) As Boolean
+            Public Shared Function VerifyDatabaseVersion(ByVal sqlConnection As SqlConnection) As Boolean
                 Dim isVerified As Boolean = False
                 Dim sqlDataReader As SqlDataReader = Nothing
                 Dim databaseVersion As System.Version = Nothing
@@ -99,6 +102,13 @@ Namespace Config
                     End If
 
                     If databaseVersion.CompareTo(New System.Version(2, 4)) = 0 Then ' 2.4
+                        MessageCollector.AddMessage(Messages.MessageClass.InformationMsg, String.Format("Upgrading database from version {0} to version {1}.", databaseVersion.ToString, "2.5"))
+                        sqlCommand = New SqlCommand("CREATE TABLE tblUsers ([Name] [varchar] (255) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL , [LastLoad] [datetime] NOT NULL) ON [PRIMARY];", sqlConnection)
+                        sqlCommand.ExecuteNonQuery()
+                        databaseVersion = New Version(2, 5)
+                    End If
+
+                    If databaseVersion.CompareTo(New System.Version(2, 5)) = 0 Then ' 2.5
                         isVerified = True
                     End If
 
@@ -144,24 +154,37 @@ Namespace Config
                     strProtected = Security.Crypt.Encrypt("ThisIsNotProtected", _password)
                 End If
 
-                _sqlQuery = New SqlCommand("DELETE FROM tblRoot", _sqlConnection)
-                _sqlQuery.ExecuteNonQuery()
+                _sqlQueryCheck = New SqlCommand("SELECT * FROM tblRoot", _sqlConnection)
+                _sqlReader = _sqlQueryCheck.ExecuteReader()
 
-                _sqlQuery = New SqlCommand("INSERT INTO tblRoot (Name, Export, Protected, ConfVersion) VALUES('" & PrepareValueForDB(tN.Text) & "', 0, '" & strProtected & "'," & App.Info.Connections.ConnectionFileVersion.ToString(CultureInfo.InvariantCulture) & ")", _sqlConnection)
-                _sqlQuery.ExecuteNonQuery()
+                _sqlReader.Read()
 
-                _sqlQuery = New SqlCommand("DELETE FROM tblCons", _sqlConnection)
-                _sqlQuery.ExecuteNonQuery()
+                If _sqlReader.HasRows = False Then
+                    _sqlReader.Close()
+                    _sqlQuery = New SqlCommand("INSERT INTO tblRoot (Name, Export, Protected, ConfVersion) VALUES('" & PrepareValueForDB(tN.Text) & "', 0, '" & strProtected & "'," & App.Info.Connections.ConnectionFileVersion.ToString(CultureInfo.InvariantCulture) & ")", _sqlConnection)
+                    _sqlQuery.ExecuteNonQuery()
+                Else
+                    If _sqlReader.Item("Name") <> PrepareValueForDB(tN.Text) Or _sqlReader.Item("Protected") <> strProtected Or _sqlReader.Item("ConfVersion").ToString() <> App.Info.Connections.ConnectionFileVersion.ToString(CultureInfo.InvariantCulture) Then
+                        _sqlReader.Close()
+                        _sqlQuery = New SqlCommand("UPDATE tblRoot SET Name = '" & PrepareValueForDB(tN.Text) & "', Protected = '" & strProtected & "', ConfVersion = " & App.Info.Connections.ConnectionFileVersion.ToString(CultureInfo.InvariantCulture), _sqlConnection)
+                        _sqlQuery.ExecuteNonQuery()
+                    Else
+                        _sqlReader.Close()
+                    End If
+                End If
+
+                '_sqlQuery = New SqlCommand("DELETE FROM tblCons", _sqlConnection)
+                '_sqlQuery.ExecuteNonQuery()
 
                 Dim tNC As TreeNodeCollection
                 tNC = tN.Nodes
 
                 SaveNodesSQL(tNC)
 
-                _sqlQuery = New SqlCommand("DELETE FROM tblUpdate", _sqlConnection)
-                _sqlQuery.ExecuteNonQuery()
-                _sqlQuery = New SqlCommand("INSERT INTO tblUpdate (LastUpdate) VALUES('" & Tools.Misc.DBDate(Now) & "')", _sqlConnection)
-                _sqlQuery.ExecuteNonQuery()
+                '_sqlQuery = New SqlCommand("DELETE FROM tblUpdate", _sqlConnection)
+                '_sqlQuery.ExecuteNonQuery()
+                '_sqlQuery = New SqlCommand("INSERT INTO tblUpdate (LastUpdate) VALUES('" & Tools.Misc.DBDate(Now) & "')", _sqlConnection)
+                '_sqlQuery.ExecuteNonQuery()
 
                 _sqlConnection.Close()
             End Sub
@@ -171,6 +194,8 @@ Namespace Config
                     _currentNodeIndex += 1
 
                     Dim curConI As Connection.Info
+                    Dim hasChanged As Boolean = False
+
                     _sqlQuery = New SqlCommand("INSERT INTO tblCons (Name, Type, Expanded, Description, Icon, Panel, Username, " & _
                                                "DomainName, Password, Hostname, Protocol, PuttySession, " & _
                                                "Port, ConnectToConsole, RenderingEngine, ICAEncryptionStrength, RDPAuthenticationLevel, Colors, Resolution, DisplayWallpaper, " & _
@@ -204,27 +229,86 @@ Namespace Config
                     End If
 
                     If Tree.Node.GetNodeType(node) = Tree.Node.Type.Container Then 'container
-                        _sqlQuery.CommandText &= "'" & Me._ContainerList(node.Tag).IsExpanded & "'," 'Expanded
+                        _sqlQuery.CommandText &= "'" & Me._ContainerList(node.Tag).IsExpanded & "'," 'Expandede
                         curConI = Me._ContainerList(node.Tag).ConnectionInfo
-                        SaveConnectionFieldsSQL(curConI)
 
-                        _sqlQuery.CommandText = Tools.Misc.PrepareForDB(_sqlQuery.CommandText)
-                        _sqlQuery.ExecuteNonQuery()
-                        '_parentConstantId = _currentNodeIndex
+                        If curConI.LastChange = Date.MinValue Then
+                            curConI.LastChange = Me._ContainerList(node.Tag).LastChange
+                        End If
+
+                        If Me._ContainerList(node.Tag).LastChange > curConI.LastChange Then
+                            curConI.LastChange = Me._ContainerList(node.Tag).LastChange
+                        End If
+
+                        _lastChange = curConI.LastChange
+
+                        _sqlQueryCheck = New SqlCommand("SELECT * FROM tblCons WHERE ConstantID = " & curConI.ConstantID, _sqlConnection)
+                        _sqlReader = _sqlQueryCheck.ExecuteReader()
+                        _sqlReader.Read()
+
+                        If _sqlReader.HasRows = True Then
+                            If _lastChange > _sqlReader.Item("LastChange") Or _currentNodeIndex <> _sqlReader.Item("PositionID") Then
+                                hasChanged = True
+                                _sqlReader.Close()
+
+                                _sqlQueryCheck = New SqlCommand("DELETE FROM tblCons WHERE ConstantID = " & curConI.ConstantID, _sqlConnection)
+                                _sqlQueryCheck.ExecuteNonQuery()
+                            Else
+                                _sqlReader.Close()
+                            End If
+                        Else
+                            _sqlReader.Close()
+                            hasChanged = True
+                        End If
+
+                        If hasChanged Then
+                            SaveConnectionFieldsSQL(curConI)
+
+                            _sqlQuery.CommandText = Tools.Misc.PrepareForDB(_sqlQuery.CommandText)
+                            _sqlQuery.ExecuteNonQuery()
+                            '_parentConstantId = _currentNodeIndex
+                        End If
                         SaveNodesSQL(node.Nodes)
                         '_xmlTextWriter.WriteEndElement()
                     End If
 
                     If Tree.Node.GetNodeType(node) = Tree.Node.Type.Connection Then
                         _sqlQuery.CommandText &= "'" & False & "',"
+                        _lastChange = Me._ConnectionList(node.Tag).LastChange
                         curConI = Me._ConnectionList(node.Tag)
-                        SaveConnectionFieldsSQL(curConI)
-                        '_xmlTextWriter.WriteEndElement()
-                        _sqlQuery.CommandText = Tools.Misc.PrepareForDB(_sqlQuery.CommandText)
+
+                        _sqlQueryCheck = New SqlCommand("SELECT * FROM tblCons WHERE ConstantID = " & curConI.ConstantID, _sqlConnection)
+                        _sqlReader = _sqlQueryCheck.ExecuteReader()
+                        _sqlReader.Read()
+
+                        If _sqlReader.HasRows = True Then
+                            If _lastChange > _sqlReader.Item("LastChange") Or _currentNodeIndex <> _sqlReader.Item("PositionID") Then
+                                hasChanged = True
+                                _sqlReader.Close()
+
+                                _sqlQueryCheck = New SqlCommand("DELETE FROM tblCons WHERE ConstantID = " & curConI.ConstantID, _sqlConnection)
+                                _sqlQueryCheck.ExecuteNonQuery()
+                            Else
+                                _sqlReader.Close()
+                            End If
+                        Else
+                            _sqlReader.Close()
+                            hasChanged = True
+                        End If
+
+                        If hasChanged Then
+                            SaveConnectionFieldsSQL(curConI)
+                            '_xmlTextWriter.WriteEndElement()
+                            _sqlQuery.CommandText = Tools.Misc.PrepareForDB(_sqlQuery.CommandText)
+                            _sqlQuery.ExecuteNonQuery()
+                        End If
+                    End If
+                    '_parentConstantId = 0
+
+                    If hasChanged Then
+                        _sqlQuery = New SqlCommand("UPDATE tblUpdate SET LastUpdate = '" & Tools.Misc.DBDate(Now) & "'", _sqlConnection)
                         _sqlQuery.ExecuteNonQuery()
                     End If
-
-                    '_parentConstantId = 0
                 Next
             End Sub
 
@@ -446,7 +530,7 @@ Namespace Config
                         End If
                     End If
 
-                    _sqlQuery.CommandText &= _currentNodeIndex & "," & _parentConstantId & "," & .ConstantID & ",'" & Tools.Misc.DBDate(Now) & "')"
+                    _sqlQuery.CommandText &= _currentNodeIndex & "," & _parentConstantId & "," & .ConstantID & ",'" & Tools.Misc.DBDate(_lastChange) & "')"
                 End With
             End Sub
 #End Region

@@ -198,8 +198,10 @@ Namespace Config
                     sqlRd.Read()
 
                     If sqlRd.HasRows = False Then
+                        sqlRd.Close()
                         App.Runtime.SaveConnections()
 
+                        sqlCon.Open()
                         sqlQuery = New SqlCommand("SELECT * FROM tblRoot", sqlCon)
                         sqlRd = sqlQuery.ExecuteReader(CommandBehavior.CloseConnection)
 
@@ -562,6 +564,7 @@ Namespace Config
                         If confVersion >= 2.4 Then
                             conI.UseCredSsp = .Item("UseCredSsp")
                             conI.Inherit.UseCredSsp = .Item("InheritUseCredSsp")
+                            conI.LastChange = .Item("LastChange")
                         End If
 
                         If SQLUpdate = True Then

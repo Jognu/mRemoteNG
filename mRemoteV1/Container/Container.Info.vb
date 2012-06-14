@@ -53,6 +53,18 @@ Namespace Container
             End Set
         End Property
 
+        Private _LastChange As Date
+        <Category(""), _
+            Browsable(False)> _
+        Public Property LastChange() As Date
+            Get
+                Return Me._LastChange
+            End Get
+            Set(ByVal value As Date)
+                Me._LastChange = value
+            End Set
+        End Property
+
         'Private _GlobalID As Integer = 0
         '<Category(""), _
         '    Browsable(False)> _

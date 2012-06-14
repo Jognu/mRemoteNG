@@ -276,6 +276,9 @@
     <Compile Include="Tools\Tools.SystemMenu.vb" />
     <Compile Include="Tools\Tools.WindowPlacement.vb" />
     <Compile Include="Tree\Tree.Node.vb" />
+    <Compile Include="UI\UI.Window.SQLUsers.vb">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="UI\UI.Window.About.vb">
       <SubType>Form</SubType>
     </Compile>
@@ -390,6 +393,10 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Tools\ReconnectGroup.resx">
       <DependentUpon>ReconnectGroup.vb</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\UI.Window.SQLUsers.resx">
+      <DependentUpon>UI.Window.SQLUsers.vb</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="UI\UI.Window.About.resx">
@@ -907,7 +914,7 @@
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
       <Visible>False</Visible>
-      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
+      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
       <Install>false</Install>
     </BootstrapperPackage>
     <BootstrapperPackage Include="Microsoft.Net.Framework.2.0">

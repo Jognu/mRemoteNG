@@ -233,6 +233,8 @@ Namespace App
             Public Shared errorsPanel As New DockContent
             Public Shared sessionsForm As UI.Window.Sessions
             Public Shared sessionsPanel As New DockContent
+            Public Shared sqlUsersForm As UI.Window.SQLUsers
+            Public Shared sqlUsersPanel As New DockContent
             Public Shared screenshotForm As UI.Window.ScreenshotManager
             Public Shared screenshotPanel As New DockContent
             Public Shared quickyForm As UI.Window.QuickConnect
@@ -392,6 +394,9 @@ Namespace App
                 Windows.sessionsForm = New UI.Window.Sessions(Windows.sessionsPanel)
                 Windows.sessionsPanel = Windows.sessionsForm
 
+                Windows.sqlUsersForm = New UI.Window.SQLUsers(Windows.sqlUsersPanel)
+                Windows.sqlUsersPanel = Windows.sqlUsersForm
+
                 Windows.screenshotForm = New UI.Window.ScreenshotManager(Windows.screenshotPanel)
                 Windows.screenshotPanel = Windows.screenshotForm
 
@@ -420,6 +425,7 @@ Namespace App
                 Windows.quickyPanel.Show(frmMain.pnlDock, DockState.DockBottomAutoHide)
                 Windows.screenshotPanel.Show(Windows.quickyPanel.Pane, Windows.quickyPanel)
                 Windows.sessionsPanel.Show(Windows.quickyPanel.Pane, Windows.screenshotPanel)
+                Windows.sqlUsersPanel.Show(Windows.quickyPanel.Pane, Windows.sqlUsersPanel)
                 Windows.errorsPanel.Show(Windows.quickyPanel.Pane, Windows.sessionsPanel)
 
                 Windows.screenshotForm.Hide()
@@ -599,7 +605,7 @@ Namespace App
             Public Shared Sub CreateSQLUpdateHandlerAndStartTimer()
                 If My.Settings.UseSQLServer = True Then
                     AddHandler Tools.Misc.SQLUpdateCheckFinished, AddressOf SQLUpdateCheckFinished
-                    TimerSqlWatcher = New Timers.Timer(3000)
+                    TimerSqlWatcher = New Timers.Timer(Convert.ToInt32(System.Configuration.ConfigurationSettings.AppSettings.Get("SQLUpdateFrequency")))
                     TimerSqlWatcher.Start()
                 End If
             End Sub
@@ -1116,6 +1122,7 @@ Namespace App
                         End If
 
                         nNode.Tag = nContI
+                        nContI.LastChange = Now
                         ContainerList.Add(nContI)
 
                         Dim conL As New Config.Connections.Load
@@ -1126,6 +1133,8 @@ Namespace App
                         conL.ContainerList = App.Runtime.ContainerList
 
                         conL.Load()
+
+                        Tools.Controls.LastChangeController.defineLastChangeNodeCollection(nNode.Nodes)
 
                         Windows.treeForm.tvConnections.SelectedNode.Nodes.Add(nNode)
                     Next
@@ -1149,6 +1158,7 @@ Namespace App
                         Dim nConI As New mRemoteNG.Connection.Info()
                         nConI.Inherit = New Connection.Info.Inheritance(nConI)
 
+                        nConI.LastChange = Now
                         nConI.Name = nNode.Text
 
                         For Each l As String In lines
@@ -1280,6 +1290,7 @@ Namespace App
 
                 nConI.Name = Host.HostNameWithoutDomain
                 nConI.Hostname = Host.HostName
+                nConI.LastChange = Now
 
                 Select Case Protocol
                     Case Connection.Protocol.Protocols.SSH2

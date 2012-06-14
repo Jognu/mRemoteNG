@@ -48,6 +48,18 @@ Namespace Connection
             End Set
         End Property
 
+        Private _LastChange As Date
+        <Category(""), _
+            Browsable(False)> _
+        Public Property LastChange() As Date
+            Get
+                Return Me._LastChange
+            End Get
+            Set(ByVal value As Date)
+                Me._LastChange = value
+            End Set
+        End Property
+
         Private _Icon As String = My.Settings.ConDefaultIcon
         <LocalizedCategory("strCategoryDisplay", 1), _
             TypeConverter(GetType(mRemoteNG.Connection.Icon)), _

@@ -1,5 +1,6 @@
 Imports WeifenLuo.WinFormsUI.Docking
 Imports mRemoteNG.App.Runtime
+Imports mRemoteNG.Tools.Controls.LastChangeController
 
 Namespace UI
     Namespace Window
@@ -545,6 +546,7 @@ Namespace UI
                     If My.Settings.SetHostnameLikeDisplayName Then
                         If TypeOf e.Node.Tag Is mRemoteNG.Connection.Info Then
                             DirectCast(e.Node.Tag, mRemoteNG.Connection.Info).Hostname = e.Label
+                            DirectCast(e.Node.Tag, mRemoteNG.Connection.Info).LastChange = Now
                         End If
                     End If
 
@@ -936,6 +938,7 @@ Namespace UI
             Private Sub mMenSortAscending_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles mMenSortAscending.Click
                 Me.tvConnections.BeginUpdate()
                 mRemoteNG.Tree.Node.Sort(Me.tvConnections.Nodes.Item(0), Tools.Controls.TreeNodeSorter.SortType.Ascending)
+                defineLastChangeNodeCollection(Me.tvConnections.Nodes.Item(0).Nodes)
                 Me.tvConnections.EndUpdate()
                 SaveConnectionsBG()
             End Sub
@@ -943,6 +946,7 @@ Namespace UI
             Private Sub cMenTreeToolsSortAscending_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles cMenTreeToolsSortAscending.Click
                 Me.tvConnections.BeginUpdate()
                 mRemoteNG.Tree.Node.Sort(Me.tvConnections.SelectedNode, Tools.Controls.TreeNodeSorter.SortType.Ascending)
+                defineLastChangeNode(Me.tvConnections.SelectedNode)
                 Me.tvConnections.EndUpdate()
                 SaveConnectionsBG()
             End Sub
@@ -950,6 +954,7 @@ Namespace UI
             Private Sub cMenTreeToolsSortDescending_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles cMenTreeToolsSortDescending.Click
                 Me.tvConnections.BeginUpdate()
                 mRemoteNG.Tree.Node.Sort(Me.tvConnections.SelectedNode, Tools.Controls.TreeNodeSorter.SortType.Descending)
+                defineLastChangeNode(Me.tvConnections.SelectedNode)
                 Me.tvConnections.EndUpdate()
                 SaveConnectionsBG()
             End Sub
@@ -1003,6 +1008,7 @@ Namespace UI
                         End If
 
                         nConI.TreeNode = nNode
+                        nConI.LastChange = Now
 
                         nNode.Tag = nConI
                         connectionList.Add(nConI)
@@ -1053,6 +1059,7 @@ Namespace UI
                     parentNode.Nodes.Add(newNode)
 
                     Me.tvConnections.SelectedNode = newNode
+                    defineLastChangeNode(newNode)
                     Me.tvConnections.SelectedNode.BeginEdit()
                 Catch ex As Exception
                     MessageCollector.AddMessage(Messages.MessageClass.ErrorMsg, String.Format(My.Language.strErrorAddFolderFailed, ex.Message), True)

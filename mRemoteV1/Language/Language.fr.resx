@@ -1404,4 +1404,7 @@
   <data name="strYes" xml:space="preserve">
     <value>Oui</value>
   </data>
+  <data name="strMenuSQLUsers" xml:space="preserve">
+    <value>Utilisateurs SQL</value>
+  </data>
 </root>

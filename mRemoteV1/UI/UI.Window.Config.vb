@@ -449,6 +449,7 @@ Namespace UI
             Private Sub pGrid_PropertyValueChanged(ByVal s As Object, ByVal e As System.Windows.Forms.PropertyValueChangedEventArgs) Handles pGrid.PropertyValueChanged
                 Try
                     If TypeOf Me.pGrid.SelectedObject Is mRemoteNG.Connection.Info Then
+                        TryCast(Me.pGrid.SelectedObject, mRemoteNG.Connection.Info).LastChange = Now
                         Select Case e.ChangedItem.Label
                             Case My.Language.strPropertyNameProtocol
                                 TryCast(Me.pGrid.SelectedObject, mRemoteNG.Connection.Info).SetDefaultPort()
@@ -1232,6 +1233,7 @@ Namespace UI
             Private Sub IconMenu_Click(ByVal sender As Object, ByVal e As System.EventArgs)
                 Try
                     If TypeOf Me.pGrid.SelectedObject Is mRemoteNG.Connection.Info Then
+                        TryCast(Me.pGrid.SelectedObject, mRemoteNG.Connection.Info).LastChange = Now
                         TryCast(Me.pGrid.SelectedObject, mRemoteNG.Connection.Info).Icon = TryCast(sender, ToolStripMenuItem).Text
                         Dim conIcon As Icon = mRemoteNG.Connection.Icon.FromString(TryCast(Me.pGrid.SelectedObject, mRemoteNG.Connection.Info).Icon)
                         If conIcon IsNot Nothing Then

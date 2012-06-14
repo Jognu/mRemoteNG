@@ -245,5 +245,29 @@ Namespace Tools
                 Descending = 1
             End Enum
         End Class
+
+        Public Class LastChangeController
+            Public Shared Sub defineLastChangeNodeCollection(ByRef treeNode As TreeNodeCollection)
+                For Each node As TreeNode In treeNode
+                    If mRemoteNG.Tree.Node.GetNodeType(node) = mRemoteNG.Tree.Node.Type.Container Then 'container
+                        ContainerList(node.Tag).LastChange = Now
+                    End If
+
+                    If mRemoteNG.Tree.Node.GetNodeType(node) = mRemoteNG.Tree.Node.Type.Connection Then 'connection
+                        ConnectionList(node.Tag).LastChange = Now
+                    End If
+                Next
+            End Sub
+
+            Public Shared Sub defineLastChangeNode(ByRef node As TreeNode)
+                If mRemoteNG.Tree.Node.GetNodeType(node) = mRemoteNG.Tree.Node.Type.Container Then 'container
+                    ContainerList(node.Tag).LastChange = Now
+                End If
+
+                If mRemoteNG.Tree.Node.GetNodeType(node) = mRemoteNG.Tree.Node.Type.Connection Then 'connection
+                    ConnectionList(node.Tag).LastChange = Now
+                End If
+            End Sub
+        End Class
     End Class
 End Namespace

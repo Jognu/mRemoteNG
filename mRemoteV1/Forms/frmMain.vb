@@ -422,6 +422,16 @@ Public Class frmMain
         End If
     End Sub
 
+    Private Sub mMenViewSqlUsers_Click(sender As System.Object, e As System.EventArgs) Handles mMenViewSqlUsers.Click
+        If Me.mMenViewSqlUsers.Checked = False Then
+            Windows.sqlUsersPanel.Show(Me.pnlDock)
+            Me.mMenViewSqlUsers.Checked = True
+        Else
+            Windows.sqlUsersPanel.Hide()
+            Me.mMenViewSqlUsers.Checked = False
+        End If
+    End Sub
+
     Private Sub mMenViewConnections_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles mMenViewConnections.Click
         If Me.mMenViewConnections.Checked = False Then
             Windows.treePanel.Show(Me.pnlDock)
@@ -828,4 +838,5 @@ Public Class frmMain
         SystemMenu.InsertMenuItem(SystemMenu.SystemMenuHandle, 1, Tools.SystemMenu.Flags.MF_BYPOSITION Or Tools.SystemMenu.Flags.MF_SEPARATOR, IntPtr.Zero, Nothing)
     End Sub
 #End Region
+
 End Class
