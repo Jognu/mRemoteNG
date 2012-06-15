@@ -33,6 +33,7 @@ Namespace Config
             Private _currentNodeIndex As Integer = 0
             Private _parentConstantId As String = 0
             Private _lastChange As Date
+            Private _consList As Dictionary(Of String, Boolean) = New Dictionary(Of String, Boolean)
 #End Region
 
 #Region "Public Properties"
@@ -179,7 +180,24 @@ Namespace Config
                 Dim tNC As TreeNodeCollection
                 tNC = tN.Nodes
 
+                _consList.Clear()
+                _sqlQuery = New SqlCommand("SELECT * FROM tblCons", _sqlConnection)
+                _sqlReader = _sqlQuery.ExecuteReader()
+
+                While _sqlReader.Read()
+                    _consList.Add(_sqlReader.Item("ConstantID"), False)
+                End While
+
+                _sqlReader.Close()
+
                 SaveNodesSQL(tNC)
+
+                For Each con As KeyValuePair(Of String, Boolean) In _consList
+                    If con.Value = False Then
+                        _sqlQuery = New SqlCommand("DELETE FROM tblCons WHERE ConstantID = '" & con.Key & "'", _sqlConnection)
+                        _sqlQuery.ExecuteNonQuery()
+                    End If
+                Next
 
                 '_sqlQuery = New SqlCommand("DELETE FROM tblUpdate", _sqlConnection)
                 '_sqlQuery.ExecuteNonQuery()
@@ -241,67 +259,83 @@ Namespace Config
                         End If
 
                         _lastChange = curConI.LastChange
+                        If _lastChange = Date.MinValue Then
+                            _lastChange = Now
+                        End If
 
-                        _sqlQueryCheck = New SqlCommand("SELECT * FROM tblCons WHERE ConstantID = " & curConI.ConstantID, _sqlConnection)
+                        _sqlQueryCheck = New SqlCommand("SELECT * FROM tblCons WHERE ConstantID = '" & curConI.ConstantID & "'", _sqlConnection)
                         _sqlReader = _sqlQueryCheck.ExecuteReader()
                         _sqlReader.Read()
 
                         If _sqlReader.HasRows = True Then
+                            _consList(curConI.ConstantID) = True
                             If _lastChange > _sqlReader.Item("LastChange") Or _currentNodeIndex <> _sqlReader.Item("PositionID") Then
                                 hasChanged = True
                                 _sqlReader.Close()
 
-                                _sqlQueryCheck = New SqlCommand("DELETE FROM tblCons WHERE ConstantID = " & curConI.ConstantID, _sqlConnection)
+                                _sqlQueryCheck = New SqlCommand("DELETE FROM tblCons WHERE ConstantID = '" & curConI.ConstantID & "'", _sqlConnection)
                                 _sqlQueryCheck.ExecuteNonQuery()
                             Else
                                 _sqlReader.Close()
                             End If
                         Else
                             _sqlReader.Close()
+                            If Not _consList.ContainsKey(curConI.ConstantID) Then
+                                _consList.Add(curConI.ConstantID, True)
+                            End If
                             hasChanged = True
-                        End If
+                            End If
 
-                        If hasChanged Then
-                            SaveConnectionFieldsSQL(curConI)
+                            If hasChanged Then
+                                SaveConnectionFieldsSQL(curConI)
 
-                            _sqlQuery.CommandText = Tools.Misc.PrepareForDB(_sqlQuery.CommandText)
-                            _sqlQuery.ExecuteNonQuery()
-                            '_parentConstantId = _currentNodeIndex
-                        End If
-                        SaveNodesSQL(node.Nodes)
-                        '_xmlTextWriter.WriteEndElement()
+                                _sqlQuery.CommandText = Tools.Misc.PrepareForDB(_sqlQuery.CommandText)
+                                _sqlQuery.ExecuteNonQuery()
+                                '_parentConstantId = _currentNodeIndex
+                            End If
+                            SaveNodesSQL(node.Nodes)
+                            '_xmlTextWriter.WriteEndElement()
                     End If
 
                     If Tree.Node.GetNodeType(node) = Tree.Node.Type.Connection Then
                         _sqlQuery.CommandText &= "'" & False & "',"
                         _lastChange = Me._ConnectionList(node.Tag).LastChange
+
+                        If _lastChange = Date.MinValue Then
+                            _lastChange = Now
+                        End If
+
                         curConI = Me._ConnectionList(node.Tag)
 
-                        _sqlQueryCheck = New SqlCommand("SELECT * FROM tblCons WHERE ConstantID = " & curConI.ConstantID, _sqlConnection)
+                        _sqlQueryCheck = New SqlCommand("SELECT * FROM tblCons WHERE ConstantID = '" & curConI.ConstantID & "'", _sqlConnection)
                         _sqlReader = _sqlQueryCheck.ExecuteReader()
                         _sqlReader.Read()
 
                         If _sqlReader.HasRows = True Then
+                            _consList(curConI.ConstantID) = True
                             If _lastChange > _sqlReader.Item("LastChange") Or _currentNodeIndex <> _sqlReader.Item("PositionID") Then
                                 hasChanged = True
                                 _sqlReader.Close()
 
-                                _sqlQueryCheck = New SqlCommand("DELETE FROM tblCons WHERE ConstantID = " & curConI.ConstantID, _sqlConnection)
+                                _sqlQueryCheck = New SqlCommand("DELETE FROM tblCons WHERE ConstantID = '" & curConI.ConstantID & "'", _sqlConnection)
                                 _sqlQueryCheck.ExecuteNonQuery()
                             Else
                                 _sqlReader.Close()
                             End If
                         Else
                             _sqlReader.Close()
+                            If Not _consList.ContainsKey(curConI.ConstantID) Then
+                                _consList.Add(curConI.ConstantID, True)
+                            End If
                             hasChanged = True
-                        End If
+                            End If
 
-                        If hasChanged Then
-                            SaveConnectionFieldsSQL(curConI)
-                            '_xmlTextWriter.WriteEndElement()
-                            _sqlQuery.CommandText = Tools.Misc.PrepareForDB(_sqlQuery.CommandText)
-                            _sqlQuery.ExecuteNonQuery()
-                        End If
+                            If hasChanged Then
+                                SaveConnectionFieldsSQL(curConI)
+                                '_xmlTextWriter.WriteEndElement()
+                                _sqlQuery.CommandText = Tools.Misc.PrepareForDB(_sqlQuery.CommandText)
+                                _sqlQuery.ExecuteNonQuery()
+                            End If
                     End If
                     '_parentConstantId = 0
 
