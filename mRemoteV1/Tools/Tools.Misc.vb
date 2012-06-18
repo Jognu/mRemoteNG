@@ -83,7 +83,7 @@ Namespace Tools
                 sqlCon.Open()
                 Config.Connections.Save.VerifyDatabaseVersion(sqlCon)
 
-                sqlQuery = New SqlCommand("SELECT * FROM tblUsers", sqlCon)
+                sqlQuery = New SqlCommand("SELECT * FROM tblUsers WHERE Name = '" & System.Environment.UserName & "'", sqlCon)
                 sqlRd = sqlQuery.ExecuteReader()
                 sqlRd.Read()
 
@@ -93,7 +93,7 @@ Namespace Tools
                     sqlQuery.ExecuteNonQuery()
                 Else
                     sqlRd.Close()
-                    sqlQuery = New SqlCommand("UPDATE tblUsers SET Name = '" & System.Environment.UserName & "', LastLoad = '" & Tools.Misc.DBDate(Now) & "'", sqlCon)
+                    sqlQuery = New SqlCommand("UPDATE tblUsers SET Name = '" & System.Environment.UserName & "', LastLoad = '" & Tools.Misc.DBDate(Now) & "' WHERE Name = '" & System.Environment.UserName & "'", sqlCon)
                     sqlQuery.ExecuteNonQuery()
                 End If
 
